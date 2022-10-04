@@ -1,0 +1,578 @@
+---
+title: "A3 presentation"
+author: "Jonathan Stathakis"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r include=FALSE}
+library('tidyverse')
+
+data <- read.csv("HbA1c2.csv")
+```
+
+```{r include=FALSE}
+rm(list=ls())
+data <- read.csv("HbA1c2.csv")
+
+proc_data <- data %>%
+              mutate(Sex = factor(Sex, levels = c(0,1), labels = c('Female', 'Male'))) %>% 
+              mutate(Group = factor(Group, levels = c(0,1), labels = c('Control', 'Treatment')))%>%
+
+  mutate(Age_cat = cut(Age,
+                breaks = c(-Inf, 55, Inf),
+                labels = c('0 - 55', '56+'),
+                ordered_result = TRUE)) %>%
+  mutate(BMI = Weight/((Height/100)**2)
+          ) %>%
+  mutate(HbA1c_delta = HbA1c_Post - HbA1c_Pre) %>%
+  mutate(BMI_cat = cut(BMI,
+            breaks = c(-Inf, 18.5, 25, 29.9, Inf),
+            labels = c('Low', 'Normal', 'Overweight', 'Obese'),
+            ordered_result = TRUE)
+        ) 
+```
+
+## Descriptive Statistics of Dataset
+
+test `r mean(data_proc$Weight)`
+
+```{r include = FALSE}
+## Numerical Variables
+CI_lower_calc <- function(data) {
+  mean = mean(data)
+
+  error = abs(qnorm((0.05)/2))* sd(data)/sqrt(n())
+  CI_lower = (mean - error)
+  return(CI_lower)
+}
+
+CI_upper_calc <- function(data) {
+  mean = mean(data)
+
+  error = abs(qnorm((0.05)/2))* sd(data)/sqrt(n())
+  CI_upper = (mean + error)
+  return(CI_upper)
+}
+
+mean_table = proc_data %>%
+  summarize(across(c(Age, Height, Weight, BMI, HbA1c_Pre, HbA1c_Post,  HbA1c_delta),
+                   mean, .names = '{.col}')) %>% 
+  pivot_longer(
+    everything(),
+    names_to = 'Variable',
+    values_to = 'mean' 
+    )
+
+sd_table = proc_data %>%
+  summarize(across(c(Age, Height, Weight, BMI, HbA1c_Pre, HbA1c_Post,  HbA1c_delta),
+                   sd, .names = '{.col}')) %>%
+  pivot_longer(
+    everything(),
+    names_to = 'Variable',
+    values_to = 'sd'
+  ) 
+
+CI_lower_table = proc_data %>%
+  summarize(across(c(Age, Height, Weight, BMI, HbA1c_Pre, HbA1c_Post,  HbA1c_delta),
+                   CI_lower_calc, .names = '{.col}')) %>%
+  pivot_longer(
+    everything(),
+    names_to = 'Variable',
+    values_to = 'CI_lower'
+  ) 
+
+CI_upper_table = proc_data %>%
+  summarize(across(c(Age, Height, Weight, BMI, HbA1c_Pre, HbA1c_Post,  HbA1c_delta),
+                   CI_upper_calc, .names = '{.col}')) %>%
+  pivot_longer(
+    everything(),
+    names_to = 'Variable',
+    values_to = 'CI_upper'
+  ) 
+```
+
+```{r}
+library(gt)
+num_vars = left_join(mean_table, sd_table) %>%
+    left_join(CI_lower_table) %>%
+      left_join(CI_upper_table)
+
+num_vars %>% 
+  mutate(Variable = c('Age (years)', 'Height (cm)', 'Weight (kg)', 'BMI (kg/m^2)', 'HbA1c_Pre', 'HbA1c_Post', 'HbA1c_Delta')) %>%
+  gt() %>%
+    tab_header(
+    title = md('## Numerical Variables')
+  ) %>% 
+  fmt_number(
+    columns = 2,
+    rows = everything(),
+    decimals = 1) %>%
+      fmt_number(
+        columns = 3:5,
+        decimals = 2
+      ) %>% 
+  cols_label(
+    Variable = md("#### Variable"),
+    mean = md("#### Mean"),
+    sd = md("#### SD"),
+    CI_lower = md('#### CI Lower'),
+    CI_upper = md('#### CI Upper')
+  )%>% gtsave('num_var.html')
+```
+
+```{r}
+library(gt)
+Age_cat_stats = proc_data %>%
+    group_by(Age_cat) %>%
+      summarize(Abs.Freq = n()) %>% 
+      mutate(Cumsum.Abs.Freq = cumsum(Abs.Freq)) %>%
+      mutate(Rel.Freq = Abs.Freq / sum(Abs.Freq)) %>%
+      mutate(Cumsum.Rel.Freq = cumsum(Rel.Freq)) %>%
+      rename(levels = Age_cat) %>%
+print
+
+BMI_cat_stats = proc_data %>%
+    group_by(BMI_cat) %>%
+      summarize(Abs.Freq = n()) %>% 
+      mutate(Cumsum.Abs.Freq = cumsum(Abs.Freq)) %>%
+      mutate(Rel.Freq = Abs.Freq / sum(Abs.Freq)) %>%
+      mutate(Cumsum.Rel.Freq = cumsum(Rel.Freq)) %>%
+      rename(levels = BMI_cat) %>%
+      mutate(across(where(is.factor), as.character)) %>%
+print
+
+Group_cat_stats = proc_data %>%
+  group_by(Group) %>%
+    summarize(Abs.Freq = n()) %>% 
+      mutate(Cumsum.Abs.Freq = cumsum(Abs.Freq)) %>%
+        mutate(Rel.Freq = Abs.Freq / sum(Abs.Freq)) %>%
+          mutate(Cumsum.Rel.Freq = cumsum(Rel.Freq)) %>%
+            rename(levels = Group) %>%
+             mutate(across(where(is.factor), as.character)) %>%
+  print
+  
+Sex_cat_stats = proc_data %>%
+  group_by(Sex) %>%
+    summarize(Abs.Freq = n()) %>% 
+      mutate(Cumsum.Abs.Freq = cumsum(Abs.Freq)) %>%
+        mutate(Rel.Freq = Abs.Freq / sum(Abs.Freq)) %>%
+          mutate(Cumsum.Rel.Freq = cumsum(Rel.Freq)) %>%
+            rename(levels = Sex) %>%
+             mutate(across(where(is.factor), as.character)) %>% print
+
+cat_vars = bind_rows(Age_cat_stats, BMI_cat_stats, Group_cat_stats, Sex_cat_stats) %>%
+  print
+
+cat_vars %>% 
+  gt(rowname_col = 'levels') %>%
+  tab_header(
+    title = md('## Categorical Variables'),
+    subtitle = md('**Age and BMI**')
+  ) %>%
+  tab_spanner(
+    label = md('#### Absolute Frequency'),
+    columns = c(2,3)
+  ) %>%
+  tab_spanner(
+    label = md('#### Relative Frequency'),
+    columns = c(4,5)
+  ) %>%
+  tab_row_group(
+    label = md('#### Group'),
+    row = c('Treatment', 'Control')
+  ) %>% 
+    tab_row_group(
+    label = md('#### BMI'),
+    row = c('Normal', 'Overweight', 'Obese')
+  ) %>%
+  tab_stubhead(label = 'levels') %>% 
+  tab_row_group(
+    label = md('#### Age'),
+    row = c('0 - 55', '56+')
+  ) %>% 
+  tab_row_group(
+    label = md('#### Sex'),
+    row = c('Male', 'Female')
+  ) %>% 
+  fmt_number(
+    columns = 4:5,
+    rows = everything(),
+    decimals = 2) %>%
+  fmt_number(
+    columns = 1
+  ) %>%
+  cols_label(
+    Abs.Freq = 'Frequency',
+    Cumsum.Abs.Freq = 'Cumsum',
+    Rel.Freq = 'Frequency',
+    Cumsum.Rel.Freq = 'Cumsum',
+    levels = ''
+  ) %>%
+    opt_horizontal_padding(scale = 0.0) %>%
+    cols_align(align = 'center') %>%
+    opt_vertical_padding(scale = 0.0) %>%
+    tab_options(heading.padding = 0) %>%
+    tab_options(row_group.padding = px(-10)) %>%
+    tab_options(data_row.padding = px(1)) %>%
+      gtsave('cat var1.html') 
+
+```
+
+```{r}
+?gt::heading.padding
+```
+
+## Descriptive Statistics of HbA1c_delta by Subpopulation
+
+```{r}
+Control_group = proc_data %>% 
+  filter(Group == 'Control') %>% print
+
+Treatment_group = proc_data %>%
+  filter(Group == 'Treatment')
+```
+
+```{r}
+## HbA1c_delta stats per subgroup in Treatmnet group 
+
+Sex_Male = Treatment_group %>%
+  filter(Sex == 'Male') %>%
+  select(HbA1c_delta) %>%
+  summarize(mean = mean(HbA1c_delta),
+            sd = sd(HbA1c_delta),
+            error = abs(qnorm((0.05)/2))* sd(HbA1c_delta)/sqrt(n()),
+            CI_lower = (mean - error),
+            CI_upper = (mean + error)
+            )
+
+Sex_Female = Treatment_group %>%
+  filter(Sex == 'Female') %>%
+  select(HbA1c_delta) %>%
+    summarize(mean = mean(HbA1c_delta),
+            sd = sd(HbA1c_delta),
+            error = abs(qnorm((0.05)/2))* sd(HbA1c_delta)/sqrt(n()),
+            CI_lower = (mean - error),
+            CI_upper = (mean + error)
+            )
+
+BMI_normal = Treatment_group %>%
+  filter(BMI_cat == 'Normal') %>%
+  select(HbA1c_delta) %>%
+   summarize(mean = mean(HbA1c_delta),
+            sd = sd(HbA1c_delta),
+            error = abs(qnorm((0.05)/2))* sd(HbA1c_delta)/sqrt(n()),
+            CI_lower = (mean - error),
+            CI_upper = (mean + error)
+            ) 
+
+BMI_overweight = Treatment_group %>%
+  filter(BMI_cat == 'Overweight') %>%
+  select(HbA1c_delta) %>%
+    summarize(mean = mean(HbA1c_delta),
+            sd = sd(HbA1c_delta),
+            error = abs(qnorm((0.05)/2))* sd(HbA1c_delta)/sqrt(n()),
+            CI_lower = (mean - error),
+            CI_upper = (mean + error)
+            ) 
+BMI_obese = Treatment_group %>%
+  filter(BMI_cat == 'Obese') %>%
+  select(HbA1c_delta) %>%
+    summarize(mean = mean(HbA1c_delta),
+            sd = sd(HbA1c_delta),
+            error = abs(qnorm((0.05)/2))* sd(HbA1c_delta)/sqrt(n()),
+            CI_lower = (mean - error),
+            CI_upper = (mean + error)
+            ) 
+
+Age_55 = Treatment_group %>%
+  filter(Age_cat == '0 - 55') %>%
+  select(HbA1c_delta) %>%
+    summarize(mean = mean(HbA1c_delta),
+            sd = sd(HbA1c_delta),
+            error = abs(qnorm((0.05)/2))* sd(HbA1c_delta)/sqrt(n()),
+            CI_lower = (mean - error),
+            CI_upper = (mean + error)
+            )
+
+Age_56 = Treatment_group %>%
+  filter(Age_cat == '56+') %>%
+  select(HbA1c_delta) %>%
+   summarize(mean = mean(HbA1c_delta),
+            sd = sd(HbA1c_delta),
+            error = abs(qnorm((0.05)/2))* sd(HbA1c_delta)/sqrt(n()),
+            CI_lower = (mean - error),
+            CI_upper = (mean + error)
+            )
+
+# Binding the rows together
+HbA1c_stats_df = bind_rows(Sex_Female, Sex_Male, BMI_normal, BMI_overweight, BMI_obese, Age_55, Age_56, .id = NULL)
+
+# Adding an identifying column. 
+subpop_names = c('**Sex_Female**', '**Sex_Male**','**BMI_normal**', '**BMI_Overweight**', '**BMI_Obese**', '**Age_0-55**', '**Age_56+**')
+
+HbA1c_stats_df = bind_rows(Sex_Female, Sex_Male, BMI_normal, BMI_overweight, BMI_obese, Age_55, Age_56)
+
+treatment_HbA1c_stats_df = bind_cols('subpops' =subpop_names, HbA1c_stats_df)
+
+print(treatment_HbA1c_stats_df)
+```
+
+```{r}
+## HbA1c_delta stats per subgroup in Control group 
+
+Sex_Male = Control_group %>%
+  filter(Sex == 'Male') %>%
+  select(HbA1c_delta) %>%
+  summarize(mean = mean(HbA1c_delta),
+            sd = sd(HbA1c_delta),
+            error = abs(qnorm((0.05)/2))* sd(HbA1c_delta)/sqrt(n()),
+            CI_lower = (mean - error),
+            CI_upper = (mean + error)
+            )
+
+Sex_Female = Control_group %>%
+  filter(Sex == 'Female') %>%
+  select(HbA1c_delta) %>%
+    summarize(mean = mean(HbA1c_delta),
+            sd = sd(HbA1c_delta),
+            error = abs(qnorm((0.05)/2))* sd(HbA1c_delta)/sqrt(n()),
+            CI_lower = (mean - error),
+            CI_upper = (mean + error)
+            )
+
+BMI_normal = Control_group %>%
+  filter(BMI_cat == 'Normal') %>%
+  select(HbA1c_delta) %>%
+   summarize(mean = mean(HbA1c_delta),
+            sd = sd(HbA1c_delta),
+            error = abs(qnorm((0.05)/2))* sd(HbA1c_delta)/sqrt(n()),
+            CI_lower = (mean - error),
+            CI_upper = (mean + error)
+            ) 
+
+BMI_overweight = Control_group %>%
+  filter(BMI_cat == 'Overweight') %>%
+  select(HbA1c_delta) %>%
+    summarize(mean = mean(HbA1c_delta),
+            sd = sd(HbA1c_delta),
+            error = abs(qnorm((0.05)/2))* sd(HbA1c_delta)/sqrt(n()),
+            CI_lower = (mean - error),
+            CI_upper = (mean + error)
+            ) 
+BMI_obese = Control_group %>%
+  filter(BMI_cat == 'Obese') %>%
+  select(HbA1c_delta) %>%
+    summarize(mean = mean(HbA1c_delta),
+            sd = sd(HbA1c_delta),
+            error = abs(qnorm((0.05)/2))* sd(HbA1c_delta)/sqrt(n()),
+            CI_lower = (mean - error),
+            CI_upper = (mean + error)
+            ) 
+
+Age_55 = Control_group %>%
+  filter(Age_cat == '0 - 55') %>%
+  select(HbA1c_delta) %>%
+    summarize(mean = mean(HbA1c_delta),
+            sd = sd(HbA1c_delta),
+            error = abs(qnorm((0.05)/2))* sd(HbA1c_delta)/sqrt(n()),
+            CI_lower = (mean - error),
+            CI_upper = (mean + error)
+            )
+
+Age_56 = Control_group %>%
+  filter(Age_cat == '56+') %>%
+  select(HbA1c_delta) %>%
+   summarize(mean = mean(HbA1c_delta),
+            sd = sd(HbA1c_delta),
+            error = abs(qnorm((0.05)/2))* sd(HbA1c_delta)/sqrt(n()),
+            CI_lower = (mean - error),
+            CI_upper = (mean + error)
+            )
+
+# Binding the rows together
+HbA1c_stats_df = bind_rows(Sex_Female, Sex_Male, BMI_normal, BMI_overweight, BMI_obese, Age_55, Age_56, .id = NULL)
+
+# Adding an identifying column. 
+subpop_names = c('**Sex_Female**', '**Sex_Male**','**BMI_normal**', '**BMI_Overweight**', '**BMI_Obese**', '**Age_0-55**', '**Age_56+**')
+
+HbA1c_stats_df = bind_rows(Sex_Female, Sex_Male, BMI_normal, BMI_overweight, BMI_obese, Age_55, Age_56)
+
+control_HbA1c_stats_df = bind_cols('subpops' =subpop_names, HbA1c_stats_df)
+
+# stat_df_2 = stat_df %>%
+#   mutate(mean = round(mean, digits = 1)) %>%
+#   mutate(sd = round(sd, digits = 2)) %>%
+#   select(-error) %>%
+#   mutate(CI_lower = round(CI_lower, digits = 2)) %>%
+#   mutate(CI_upper = round(CI_upper, digits = 2)) %>%
+#   kable(col.names = gsub("[_]", " ", names(.)),
+#         align = 'r', label = 'Descriptive Statistics')
+# 
+# stat_df_2
+print(control_HbA1c_stats_df)
+```
+
+```{r}
+diff_mean = treatment_HbA1c_stats_df$mean - control_HbA1c_stats_df$mean
+diff_sd = abs(treatment_HbA1c_stats_df$sd - control_HbA1c_stats_df$sd)
+diff_CI_lower = treatment_HbA1c_stats_df$CI_lower - control_HbA1c_stats_df$CI_lower
+diff_CI_upper = treatment_HbA1c_stats_df$CI_upper - control_HbA1c_stats_df$CI_upper
+
+diff_df = data.frame(control_HbA1c_stats_df$subpops, diff_mean, diff_sd, diff_CI_lower, diff_CI_upper)
+
+diff_df = diff_df %>%
+  rename(subpops = control_HbA1c_stats_df.subpops,
+         mean = diff_mean,
+         sd = diff_sd,
+         CI_lower = diff_CI_lower,
+         CI_upper = diff_CI_upper 
+  )
+
+diff_df %>% 
+print
+```
+
+```{r}
+
+diff_df %>% 
+  gt() %>%
+  tab_header(
+    title = md('## Statistics of change in HbA1c'),
+    subtitle = md('*Before and After Treatment*')
+  ) %>%
+    fmt_markdown(columns=subpops, rows = everything()) %>%
+  fmt_number(
+    columns = 2,
+    decimals = 1
+  ) %>%
+  fmt_number(
+    columns = 3:5,
+    decimals = 2
+  ) %>%
+cols_label(
+  subpops = md('#### Subpopulation'),
+  mean = md('#### Mean'),
+  sd = md('#### SD'),
+  CI_lower = md('#### 95% CI Lower'),
+  CI_upper = md('#### 95% CI Upper'),
+) %>%
+  fmt_markdown(columns=subpops, rows = everything()) %>%
+  cols_align(align = 'center') %>% 
+    gtsave('diff_df.html')
+```
+
+```{r}
+# # What isthe direction of change?
+# t = Treatment_group %>% 
+#   select(HbA1c_delta) %>% print
+# 
+# c = Control_group %>% 
+#   select(HbA1c_delta) %>% 
+#   mutate(i = n()) %>%
+#   print
+# 
+# inner_join(t,c)
+```
+
+## Boxplots of HbA1c_Delta by BMI, Sex, and Age
+
+### For Control and Treatment Group
+
+```{r}
+proc_data %>% 
+  names
+```
+
+```{r}
+control_barplot = proc_data %>%
+  filter(Group == 'Treatment') %>%
+  ggplot(aes(BMI_cat, 
+            HbA1c_delta,
+            fill = Age_cat
+             ))+
+    geom_bar(stat = "identity",
+           position='dodge') + 
+    geom_jitter(size = 0.5) + 
+    scale_fill_manual(values = c('#009E73','#E69F00')) +
+  facet_wrap(~Sex, scale='fixed')
+    
+
+#control_barplot
+
+#which(proc_data[proc_data$HbA1c_delta < 0])
+
+control_barplot %>%
+  print
+
+```
+
+```{r}
+proc_data %>% 
+  filter(Group == 'Treatment') %>%
+  names
+```
+
+```{r}
+print(mean(proc_data$HbA1c_delta))
+## BMI
+control_box = proc_data %>%
+  #filter(Group == 'Treatment') %>%
+  ggplot(aes(BMI_cat, 
+            HbA1c_delta,
+            fill = BMI_cat
+             ))+
+    geom_boxplot() +
+    #geom_jitter(size = 0.1, alpha = 0.4) + 
+    xlab('BMI') +
+    ylab('change in HbA1c') +
+  scale_fill_manual(values = c('#009E73','#E69F00', '#750985')) +
+  facet_wrap(~Group) + 
+  theme_minimal()
+
+control_box
+```
+
+```{r}
+## Group, Gender, BMI
+control_box = proc_data %>%
+  ggplot(aes(Sex, 
+            HbA1c_delta,
+            fill = BMI_cat
+             ))+
+    geom_boxplot() +
+  #geom_boxplot(color = Age_cat) + xx
+    #scale_fill_manual(values = c('#009E73','#E69F00')) +
+  #facet_wrap(~Sex, scale='fixed')
+  geom_jitter(size = 0.01, alpha = 0.6) +   
+  xlab('Sex') +
+    ylab('change in HbA1c') +
+  scale_fill_manual(values = c('#009E73','#E69F00', '#750985')) +
+  facet_wrap(~Group) + 
+  theme_minimal()
+
+control_box
+```
+
+```{r}
+## Group, Age, BMI
+control_box = proc_data %>%
+  #filter(Group == 'Treatment') %>%
+  ggplot(aes(Sex, 
+            HbA1c_delta,
+            fill = BMI_cat
+             ))+
+    geom_boxplot() +
+  #geom_boxplot(color = Age_cat) + xx
+    #scale_fill_manual(values = c('#009E73','#E69F00')) +
+  #facet_wrap(~Sex, scale='fixed')
+  #geom_jitter(size = 0.01, alpha = 0.6) +   
+  #xlab('Sex') +
+    ylab('change in HbA1c') +
+  scale_fill_manual(values = c('#009E73','#E69F00', '#750985')) +
+  facet_wrap(~Group) + 
+  theme_minimal() + 
+  xlab('Sex')
+
+control_box
+```
