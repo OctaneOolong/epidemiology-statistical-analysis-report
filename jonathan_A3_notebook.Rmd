@@ -76,13 +76,14 @@ proc_data <- proc_data[, col_order]
 
 ## Table 1: descriptive statistics of baseline characteristics stratified by exposure:
 
-Prior to analysis, we observed the baseline characteristics to ensure that the participants were a fair representation of the population, that characteristics were evenly distributed within subpopulations as well as between the treatment and control groups. Table 1. contains summary statistics of the baseline characteristics recorded during the study.
+Prior to analysis, we observed the baseline characteristics to ensure that the participants were a fair representation of the population and that characteristics were evenly distributed within subpopulations, as well as between treatment and control groups. **Table 1.** contains summary statistics of the baseline characteristics recorded during the study.
 
-In total, there were 1234 participants, divided into roughly equally sized Control (*n* = 625) and Treatment (*n* = 609) groups. The sample population was stratified such that the proportion of the following characteristics was reflected in each of the exposure groups. There was an approximately equal division between Male (*n* = 604, (48.9%)) and Female (630, (51.1%)). The participant ages ranged from `r min(proc_data$Age)` to `r max(proc_data$Age)` with a mean value of `r round(mean(proc_data$Age), 1)`. They were divided into two levels, 0 - 55 (*n* = 1006, (81.5%)) and 56+ (*n* = 228, (18.5%)). The participant weights ranged from `r min(proc_data$Weight)` to `r max(proc_data$Weight)` with a mean value of `r round(mean(proc_data$Weight), digits = 1)` BMI ranged from `r round(min(proc_data$BMI), 1)` to `r round(max(proc_data$BMI), 1)` with a mean value of `r round(mean(proc_data$BMI), 1)`.
+In total, there were 1234 participants, divided into roughly equally sized Control (*n* = 625) and Treatment (*n* = 609) groups. The sample population was stratified such that the proportion of the following characteristics was reflected in each of the exposure groups. There was an approximately equal division between Male (*n* = 604, (48.9%)) and Female (630, (51.1%)). Participant age ranged from `r min(proc_data$Age)` to `r max(proc_data$Age)` with a mean value of `r round(mean(proc_data$Age), 1)`. They were divided into two levels, 0 - 55 (*n* = 1006, (81.5%)) and 56+ (*n* = 228, (18.5%)). The participant weights ranged from `r min(proc_data$Weight)` to `r max(proc_data$Weight)` with a mean value of `r round(mean(proc_data$Weight), digits = 1)` BMI ranged from `r round(min(proc_data$BMI), 1)` to `r round(max(proc_data$BMI), 1)` with a mean value of `r round(mean(proc_data$BMI), 1)`.
 
+<div align="center">
 ```{r table-1, echo=FALSE, fig.align = 'center', out_width ='200%'}
 
-# Forming the Table 1 using Table1 package. 
+# Forming the Table 1 using table1 package. 
 
 label(proc_data$Sex) <- 'Sex'
 label(proc_data$Age_Cat) <- 'Age Categories'
@@ -107,7 +108,9 @@ tab1 = table1(~Sex + Age + Age_Cat + Weight + Height + BMI + BMI_cat  | Group,
               caption = 'Table 1: A table of descriptive statistics of baseline characteristics of the participants of the study, divided based on exposure',
               )
 tab1
-```
+``` 
+</div>
+
 
 ## Distributions of each variable
 
