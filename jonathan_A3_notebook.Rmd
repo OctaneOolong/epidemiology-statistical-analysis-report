@@ -5,6 +5,8 @@ output:
   html_document: 
     toc: yes
     number_sections: yes
+bibliography: references.bib
+csl: "https://raw.githubusercontent.com/citation-style-language/styles/master/vancouver.csl"
 ---
 
 ```{r load-data-and-libraries, echo=FALSE, include = FALSE}
@@ -24,7 +26,7 @@ data <- read.csv('HbA1c2.csv')
 
 # Introduction
 
-The HbA1c test, or glycated haemoglobin test, measures of the average glucose level over a period of several months, quantified as the concentration of glucose complexed with haemoglobin in red blood cells. This test is used to diagnose diabetes, as well as monitor diabetes status. A change in HbA1c level over time will indicate a change in the level of free glucose in the blood, and potentially a decrease in diabetes related symptoms. This study will address whether a particular treatment affects the HbA1c level in a treatment group when compared with a control group.
+The HbA1c test, or glycated haemoglobin test, measures of the average glucose level over a period of several months, quantified as the concentration of glucose complexed with haemoglobin in red blood cells. This test is used to diagnose diabetes, as well as monitor diabetes status. A change in HbA1c level over time will indicate a change in the level of free glucose in the blood, and potentially a decrease in diabetes related symptoms @whyhba12019. This study will address whether a particular treatment affects the HbA1c level in a treatment group when compared with a control group.
 
 # Study Description
 
@@ -439,3 +441,5 @@ treatment_diff_stats
 ```
 
 Without performing any modeling or testing, as per the assessment description, we will conclude with a visual observation. Judging by the plot above, the mean difference in HbA1c_delta between the control and treatment group, we can conclude that for this sample population, the treatment had the effect of decreasing the HbA1c levels in exposed participants by `r sprintf('%.2f (%.3f)', treatment_diff_stats[1], treatment_diff_stats[2])` . Whatsmore, it doesn't appear as though any of the subpopulations defined by baseline characteristics are more sensitive to the treatment, affecting all roughly equally. The treatment can be considered a success, however further investigation is needed into its effects on specific subpopulations defined by physical characteristics.
+
+# References
