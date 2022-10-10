@@ -26,9 +26,13 @@ data <- read.csv('HbA1c2.csv')
 
 # Introduction
 
-The HbA1c test, or glycated haemoglobin test, measures of the average glucose level over a period of several months, quantified as the concentration of glucose complexed with haemoglobin in red blood cells. This test is used to diagnose diabetes, as well as monitor diabetes status. A change in HbA1c level over time will indicate a change in the level of free glucose in the blood, and potentially a decrease in diabetes related symptoms @whyhba12019. This study will address whether a particular treatment affects the HbA1c level in a treatment group when compared with a control group.
+ 
+
+The HbA1c test, or glycated haemoglobin test, measures of the average glucose level over a period of several months, quantified as the concentration of glucose complexed with haemoglobin in red blood cells. This test is used to diagnose diabetes, as well as monitor diabetes status. A change in HbA1c level over time will indicate a change in the level of free glucose in the blood, and potentially a decrease in diabetes related symptoms @whyhba12019. This study will address whether a particular treatment affects the HbA1c level in a treatment group when compared with a control group.    
 
 # Study Description
+
+ 
 
 This study observed delta HbA1c, the difference score of HbA1c before and after treatment, between a Treatment and a Control group. While hypothesis testing and modeling is outside of the scope of this study, we endevoured to make a conslusive statement by obesrvation of means between the control and treatment groups, as well as observe effects between subpopulations of the treatment group. We can assume that each participants data is independent as their biometric infromation is not shared. As each study group is n \> 500, it is safe to assume that responses are independent, and that parametric methods can be used, an assumption that will be justified in a following section.
 
@@ -50,11 +54,11 @@ proc_data <- data %>%
                          labels = c('Control', 'Treatment'))) 
 ```
 
-To standardise Weight and Height across participants, these measurements were combined into BMI, calculated as weight in kg divided by the square of the height in meters. BMI was then stratified into the following categories: Low $\leq$ 18.5, 18.5 \< Normal \< 25, 25 $\leq$ Overweight $\leq$ 29.9, Obese 30+. Participants were also divided into two Age groups, $55 \leq$ Age $\geq$ 56.
+To standardise Weight and Height across participants, these measurements were combined into BMI, calculated as weight in kg divided by the square of the height in meters. BMI was then stratified into the following categories: Low $\leq$ 18.5, 18.5 \< Normal \< 25, 25 $\leq$ Overweight $\leq$ 29.9, Obese 30+. Participants were also divided into two Age groups, 55 $\leq$ Age $\geq$ 56.
 
 ```{r Calculate-BMI-and-transform-Age-and-BMI-into-factors, include=FALSE}
 
-# Creates a BMI column from Weight and Height, then uses cut() to stratify Age and BMI into the specified levels. 
+# Creates a BMI column from Weight and Height, then uses cut() to stratify Age into 0 - 55, 56+ and BMI into <18.5 (Low), 18.5 - 25 (Normal), 25 - 29.9 (Overweight), 29.9+ (Obese).
 
 proc_data <- proc_data %>%
               mutate(Age_Cat =
@@ -63,14 +67,18 @@ proc_data <- proc_data %>%
                labels = c('0 - 55', '56+'),
                ordered_result = TRUE)) %>%
               mutate(BMI = Weight/((Height/100)**2)) %>%
-              mutate(BMI_cat = cut(BMI,
+              mutate(BMI_Cat = cut(BMI,
                breaks = c(-Inf, 18.5, 25, 29.9, Inf),
                labels = c('Low', 'Normal', 'Overweight', 'Obese'), ordered_result = TRUE))
 
-col_order = c('id', 'Group', 'Sex', 'Age', 'Age_Cat', 'Weight', 'Height', 'BMI', 'BMI_cat')
+# Modifies the dataframe column order for readability, with processed data adjacent to their base columns, i.e. Age_Cat next to Age.
+
+col_order = c('id', 'Group', 'Sex', 'Age', 'Age_Cat', 'Weight', 'Height', 'BMI', 'BMI_Cat')
 
 proc_data <- proc_data[, col_order] 
 ```
+
+ 
 
 # Description of the Dataset
 
@@ -80,7 +88,9 @@ Prior to analysis, we observed the baseline characteristics to ensure that the p
 
 In total, there were 1234 participants, divided into roughly equally sized Control (*n* = 625) and Treatment (*n* = 609) groups. The sample population was stratified such that the proportion of the following characteristics was reflected in each of the exposure groups. There was an approximately equal division between Male (*n* = 604, (48.9%)) and Female (630, (51.1%)). Participant age ranged from `r min(proc_data$Age)` to `r max(proc_data$Age)` with a mean value of `r round(mean(proc_data$Age), 1)`. They were divided into two levels, 0 - 55 (*n* = 1006, (81.5%)) and 56+ (*n* = 228, (18.5%)). The participant weights ranged from `r min(proc_data$Weight)` to `r max(proc_data$Weight)` with a mean value of `r round(mean(proc_data$Weight), digits = 1)` BMI ranged from `r round(min(proc_data$BMI), 1)` to `r round(max(proc_data$BMI), 1)` with a mean value of `r round(mean(proc_data$BMI), 1)`.
 
-<div align="center">
+\
+
+::: {align="center"}
 ```{r table-1, echo=FALSE, fig.align = 'center', out_width ='200%'}
 
 # Forming the Table 1 using table1 package. 
@@ -102,23 +112,26 @@ rndr <- function(x, name, ...){
     parse.abbrev.render.code(c("", what))(x)
 }
 
-tab1 = table1(~Sex + Age + Age_Cat + Weight + Height + BMI + BMI_cat  | Group,
+tab1 = table1(~Sex + Age + Age_Cat + Weight + Height + BMI + BMI_Cat  | Group,
               data = proc_data,
               render = rndr,
               caption = 'Table 1: A table of descriptive statistics of baseline characteristics of the participants of the study, divided based on exposure',
               )
 tab1
-``` 
-</div>
+```
+:::
 
+ \
 
-## Distributions of each variable
+## Variable Distributions
 
 ```{r plot-style-chunk, echo=FALSE}
 ### Admin variables for setting a plotting theme
 
 plot_fill = 'lightseagreen'
 ```
+
+\
 
 ```{r baseline_hists, echo=FALSE, message=FALSE, warning=FALSE, out.width='200%'}
 
@@ -130,14 +143,13 @@ males_baseline_dist =
       select(-id) %>%
             melt %>%
               ggplot(aes(x = value)) + 
-                facet_wrap(~variable,scales = "free_x") + 
+                facet_wrap(~variable, scales = "free_x") + 
                 geom_histogram(fill = plot_fill) +
                 ggtitle('Males')+
                 ylab('')+
                 xlab('')+
                 theme_minimal()+
                 theme(text = element_text(size=8)) + 
-              #  scale_y_discrete(labels = NULL) + 
                 labs(
                   caption = 'Figure 1. Frequency distributions of baseline characteristics accounting for Sex. Age (years), Weight (kg), Height (cm), BMI (kg/m²).'
                 )
@@ -160,26 +172,30 @@ females_baseline_dist =
               caption = ''
           )
 
-#females_baseline_dist
+# arrange the male and female distribution plots in a 1 x 2 grid
+
 char_dist_grid = grid.arrange(females_baseline_dist, males_baseline_dist, ncol = 2)
 ```
 
+\
+
 As shown in Figure 1., the characteristic variables of the dataset described in Table 1. are normally distributed when accounting for Sex, although the Weight of both genders has some irregularities that are smoothed out when observing BMI.
 
-```{r side-by-side-plots-of-BMI-cats-by-gender, echo = FALSE}
+
+```{r side-by-side-plots-of-BMI-Cat-by-gender, echo = FALSE}
 
 sex_bmi_hists <-
   proc_data %>%
     ggplot(aes(Sex))+
-    geom_bar(fill = plot_fill) +
+    geom_bar(aes(fill = BMI_Cat)) +
    labs(
       title = 'BMI Categories',
       subtitle = 'Counts of subpopulation gender per category', 
-      caption = '(Figure 2. Low – up to 18.5, Normal – >18.5 and <25,
-Overweight – 25-29.9, Obese – 30 or more). Note that no participants fell into the Low category, and only 2 Males are present in the Normal category.'
+      caption = '(Figure 2. Low = < 18.5, Normal = >18.5 and <25,
+Overweight = 25-29.9, Obese = > 30). Note that no participants fell into the Low category, and only 2 Males are present in the Normal category.'
     ) +
     theme_minimal()+
-    facet_wrap(~BMI_cat) 
+    facet_wrap(~BMI_Cat) 
 
 sex_bmi_hists
 ```
@@ -290,19 +306,19 @@ Sex_Female = proc_data_HbA1c %>%
       relocate(subpop, 1) 
 
 BMI_normal = proc_data_HbA1c %>%
-  filter(BMI_cat == 'Normal') %>%
+  filter(BMI_Cat == 'Normal') %>%
    summarise_HbA1c_chain() %>%
     mutate(subpop = 'BMI_normal') %>%
       relocate(subpop, 1) 
 
 BMI_overweight = proc_data_HbA1c %>%
-  filter(BMI_cat == 'Overweight') %>%
+  filter(BMI_Cat == 'Overweight') %>%
    summarise_HbA1c_chain() %>%
     mutate(subpop = 'BMI_overweight') %>%
       relocate(subpop, 1) 
 
 BMI_obese = proc_data_HbA1c %>%
- filter(BMI_cat == 'Obese') %>%
+ filter(BMI_Cat == 'Obese') %>%
    summarise_HbA1c_chain() %>%
     mutate(subpop = 'BMI_obese') %>%
       relocate(subpop, 1) 
@@ -407,7 +423,7 @@ group_box =
   filter(Group == 'Treatment') %>%
   ggplot(aes(Sex, 
             HbA1c_delta,
-            fill = BMI_cat
+            fill = BMI_Cat
              ))+
     geom_boxplot() +
     xlab('Sex') +
@@ -425,7 +441,7 @@ group_box =
 group_box
 ```
 
-From Figure 5. We can observe that within the sample treatment population, obese females $\leq 55$ had the widest range of variation in response to exposure, followed closely by oveweight males of both age categories. Men in the Normal BMI category had the lowest response to the treatment, and individuals belonging to the 56+ age category had low variation compared to the other groups, but this is likey due to the small subpopulation sample size of *n* = `r proc_data_HbA1c %>% filter(Group == 'Treatment', Age_Cat == '56+', Sex == 'Male', BMI_cat == 'Normal') %>% summarise (count = n())`. We can observe that every subpopulation experienced a decrease in HbA1c levels after treatment was administered. What's more, mean response is roughly centered on a decrease of 2. The greater variation witnessed in the $\leq 55$ Age category can be accounted for by noting that it is three times the size of the $+56$ category, and thus perhaps increasing the sampling size of older participants will reduce the overall variation.
+From Figure 5. We can observe that within the sample treatment population, obese females $\leq 55$ had the widest range of variation in response to exposure, followed closely by oveweight males of both age categories. Men in the Normal BMI category had the lowest response to the treatment, and individuals belonging to the 56+ age category had low variation compared to the other groups, but this is likey due to the small subpopulation sample size of *n* = `r proc_data_HbA1c %>% filter(Group == 'Treatment', Age_Cat == '56+', Sex == 'Male', BMI_Cat == 'Normal') %>% summarise (count = n())`. We can observe that every subpopulation experienced a decrease in HbA1c levels after treatment was administered. What's more, mean response is roughly centered on a decrease of 2. The greater variation witnessed in the $\leq 55$ Age category can be accounted for by noting that it is three times the size of the $+56$ category, and thus perhaps increasing the sampling size of older participants will reduce the overall variation.
 
 # Conclusion
 
