@@ -30,7 +30,7 @@ The HbA1c test, or glycated haemoglobin test, measures of the average glucose le
 
 # Study Description
 
-This study will be observing delta HbA1c, the difference score of HbA1c before and after treatment, between two groups, Treatment and Control. While hypothesis testing and modeling is outside of the scope of this study, we will endevour to make a conslusive statement by obesrvation of means between the control and treatment groups, as well as observe effects between subpopulations of the treatment group. We can assume that each participant's data is independent as their biometric infromation is not shared. As each group is n \> 500, it should be safe to assume that responses are independent, and that parametric methods can be used. We will clarify this in a later section.
+This study observed delta HbA1c, the difference score of HbA1c before and after treatment, between a Treatment and a Control group. While hypothesis testing and modeling is outside of the scope of this study, we endevoured to make a conslusive statement by obesrvation of means between the control and treatment groups, as well as observe effects between subpopulations of the treatment group. We can assume that each participants data is independent as their biometric infromation is not shared. As each study group is n \> 500, it is safe to assume that responses are independent, and that parametric methods can be used, an assumption that will be justified in a following section.
 
 # Data Cleaning and Formatting
 
@@ -78,7 +78,7 @@ proc_data <- proc_data[, col_order]
 
 Prior to analysis, we observed the baseline characteristics to ensure that the participants were a fair representation of the population, that characteristics were evenly distributed within subpopulations as well as between the treatment and control groups. Table 1. contains summary statistics of the baseline characteristics recorded during the study.
 
-In total, there were 1234 participants, divided into roughly equally sized Control (N = 625) and Treatment (N = 609) groups. The sample population was stratified such that the proportion of the following characteristics was reflected in each of the exposure groups. There was an approximately equal division between Male (N = 604, (48.9%)) and Female (630, (51.1%)). The participant ages ranged from `r min(proc_data$Age)` to `r max(proc_data$Age)` with a mean value of `r round(mean(proc_data$Age), 1)`. They were divided into two levels, 0 - 55 (N = 1006, (81.5%)) and 56+ (N=228, (18.5%)). The participant weights ranged from `r min(proc_data$Weight)` to `r max(proc_data$Weight)` with a mean value of `r round(mean(proc_data$Weight), digits = 1)` BMI ranged from `r round(min(proc_data$BMI), 1)` to `r round(max(proc_data$BMI), 1)` with a mean value of `r round(mean(proc_data$BMI), 1)`.
+In total, there were 1234 participants, divided into roughly equally sized Control (*n* = 625) and Treatment (*n* = 609) groups. The sample population was stratified such that the proportion of the following characteristics was reflected in each of the exposure groups. There was an approximately equal division between Male (*n* = 604, (48.9%)) and Female (630, (51.1%)). The participant ages ranged from `r min(proc_data$Age)` to `r max(proc_data$Age)` with a mean value of `r round(mean(proc_data$Age), 1)`. They were divided into two levels, 0 - 55 (*n* = 1006, (81.5%)) and 56+ (*n* = 228, (18.5%)). The participant weights ranged from `r min(proc_data$Weight)` to `r max(proc_data$Weight)` with a mean value of `r round(mean(proc_data$Weight), digits = 1)` BMI ranged from `r round(min(proc_data$BMI), 1)` to `r round(max(proc_data$BMI), 1)` with a mean value of `r round(mean(proc_data$BMI), 1)`.
 
 ```{r table-1, echo=FALSE, fig.align = 'center', out_width ='200%'}
 
@@ -391,7 +391,7 @@ HbA1c_stats_gt
 
 <br>
 
-To explore the high level of variation of HbA1c delta, we plotted HbA1c delta in Figure 5. as grouped box-whisker plots against Age, Gender and BMI
+To explore the high level of variation of HbA1c delta, HbA1c delta was plotted in Figure 5. as grouped box-whisker plots against Age, Gender and BMI:
 
 ```{r treatment-HbA1c-diff-grouped-box, echo=FALSE, fig.height=7, fig.width=10}
 
@@ -422,7 +422,7 @@ group_box =
 group_box
 ```
 
-From Figure 5. We can observe that within the sample treatment population, obese females $\leq 55$ had the widest range of variation in response to exposure, followed closely by oveweight males of both age categories. Men in the Normal BMI category had the lowest response to the treatment, and individuals belonging to the 56+ age category had low variation compared to the other groups, but this is likey due to the small subpopulation sample size of n = `r proc_data_HbA1c %>% filter(Group == 'Treatment', Age_Cat == '56+', Sex == 'Male', BMI_cat == 'Normal') %>% summarise (count = n())`. We can observe that every subpopulation experienced a decrease in HbA1c levels after treatment was administered. What's more, mean response is roughly centered on a decrease of 2. The greater variation witnessed in the $\leq 55$ Age category can be accounted for by noting that it is three times the size of the $+56$ category, and thus perhaps increasing the sampling size of older participants will reduce the overall variation.
+From Figure 5. We can observe that within the sample treatment population, obese females $\leq 55$ had the widest range of variation in response to exposure, followed closely by oveweight males of both age categories. Men in the Normal BMI category had the lowest response to the treatment, and individuals belonging to the 56+ age category had low variation compared to the other groups, but this is likey due to the small subpopulation sample size of *n* = `r proc_data_HbA1c %>% filter(Group == 'Treatment', Age_Cat == '56+', Sex == 'Male', BMI_cat == 'Normal') %>% summarise (count = n())`. We can observe that every subpopulation experienced a decrease in HbA1c levels after treatment was administered. What's more, mean response is roughly centered on a decrease of 2. The greater variation witnessed in the $\leq 55$ Age category can be accounted for by noting that it is three times the size of the $+56$ category, and thus perhaps increasing the sampling size of older participants will reduce the overall variation.
 
 # Conclusion
 
