@@ -26,13 +26,9 @@ data <- read.csv('HbA1c2.csv')
 
 # Introduction
 
- 
-
-The HbA1c test, or glycated haemoglobin test, measures of the average glucose level over a period of several months, quantified as the concentration of glucose complexed with haemoglobin in red blood cells. This test is used to diagnose diabetes, as well as monitor diabetes status. A change in HbA1c level over time will indicate a change in the level of free glucose in the blood, and potentially a decrease in diabetes related symptoms @whyhba12019. This study will address whether a particular treatment affects the HbA1c level in a treatment group when compared with a control group.    
+The HbA1c test, or glycated haemoglobin test, measures of the average glucose level over a period of several months, quantified as the concentration of glucose complexed with haemoglobin in red blood cells. This test is used to diagnose diabetes, as well as monitor diabetes status. A change in HbA1c level over time will indicate a change in the level of free glucose in the blood, and potentially a decrease in diabetes related symptoms @whyhba12019. This study will address whether a particular treatment affects the HbA1c level in a treatment group when compared with a control group.
 
 # Study Description
-
- 
 
 This study observed delta HbA1c, the difference score of HbA1c before and after treatment, between a Treatment and a Control group. While hypothesis testing and modeling is outside of the scope of this study, we endevoured to make a conslusive statement by obesrvation of means between the control and treatment groups, as well as observe effects between subpopulations of the treatment group. We can assume that each participants data is independent as their biometric infromation is not shared. As each study group is n \> 500, it is safe to assume that responses are independent, and that parametric methods can be used, an assumption that will be justified in a following section.
 
